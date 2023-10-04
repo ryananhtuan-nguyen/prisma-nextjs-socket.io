@@ -1,0 +1,7 @@
+.env
+node_module
+./client/node_module
+./server/node_module
+./client/.env
+./server/.env
+dev.db*
