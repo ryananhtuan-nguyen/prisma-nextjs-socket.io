@@ -1,38 +1,28 @@
+import { Server } from 'socket.io'
+import prisma from './db'
 const express = require('express')
 const http = require('http')
 const app = express()
 const server = http.createServer(app)
-import { Server } from 'socket.io'
 const io = new Server(server, {
   cors: {
     origin: '*',
   },
 })
-import prisma from './db'
 
 io.on('connection', (socket) => {
-  socket.on('loading-things', async () => {
-    console.log('loading request received')
+  socket.on('get-data', async () => {
     const todos = await prisma.todo.findMany()
-    socket.emit('here-you-go', todos)
+    io.emit('here-you-go', todos)
   })
 
-  socket.on('adding', async (data: string, cb: (e: Error | null) => void) => {
-    await prisma.todo.create({
-      data: {
-        task: data,
-        complete: false,
-      },
-    })
-
-    socket.broadcast.emit('somebody-added')
-    cb(null)
+  socket.on('add-this', async (task: string) => {
+    await prisma.todo.create({ data: { task, complete: false } })
+    io.emit('someone-added')
   })
-
-  socket.on('clear', async (cb: (e: Error | null) => void) => {
+  socket.on('clear', async () => {
     await prisma.todo.deleteMany()
-    socket.broadcast.emit('clear')
-    cb(null)
+    io.emit('clear')
   })
 })
 
